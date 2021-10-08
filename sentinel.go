@@ -108,7 +108,7 @@ func (ns NoSentinelsAvailable) Error() string {
 // Lock must be held by caller.
 func (s *Sentinel) putToTop(addr string) {
 	addrs := s.Addrs
-	if addrs[0] == addr {
+	if len(addrs) > 0 && addrs[0] == addr {
 		// Already on top.
 		return
 	}
@@ -129,7 +129,7 @@ func (s *Sentinel) putToTop(addr string) {
 // Lock must be held by caller.
 func (s *Sentinel) putToBottom(addr string) {
 	addrs := s.Addrs
-	if addrs[len(addrs)-1] == addr {
+	if len(addrs) > 0 && addrs[len(addrs)-1] == addr {
 		// Already on bottom.
 		return
 	}
@@ -226,7 +226,9 @@ func (s *Sentinel) doUntilSuccess(f func(redis.Conn) (interface{}, error)) (inte
 			s.mu.Unlock()
 			continue
 		}
+		s.mu.Lock()
 		s.putToTop(addr)
+		s.mu.Unlock()
 		return reply, nil
 	}
 
